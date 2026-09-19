@@ -1,0 +1,59 @@
+<div id="outline-container-headline-1" class="outline-2">
+<h2 id="headline-1">
+captions, custom attributes and more
+</h2>
+<div id="outline-text-headline-1" class="outline-text-2">
+<figure>
+<div class="src src-sh a b c d" id="it">
+<div class="highlight">
+<pre>echo &#34;a bash source block with custom html attributes&#34;
+</pre>
+</div>
+</div>
+<figcaption>
+and <span style="text-decoration: underline;">multiple</span> lines of <strong>captions</strong>!
+</figcaption>
+</figure>
+<p>
+and an image with custom html attributes and a caption</p>
+<figure>
+<img src="https://placekitten.com/200/200#.png" alt="https://placekitten.com/200/200#.png" title="https://placekitten.com/200/200#.png" style="height: 100%; border: 10px solid black;" id="kittens"/>
+<figcaption>
+kittens!
+</figcaption>
+</figure>
+<p>named paragraph</p>
+<div class="src src-text">
+<div class="highlight">
+<pre>
+named block
+</pre>
+</div>
+</div>
+<p>#not a comment because there&#39;s no space after the hashtag</p>
+</div>
+</div>
+<div id="outline-container-headline-2" class="outline-2">
+<h2 id="headline-2">
+table of contents
+</h2>
+<div id="outline-text-headline-2" class="outline-text-2">
+<p>A table of contents can be rendered anywhere in the document by using</p>
+<div class="src src-org">
+<div class="highlight">
+<pre>
+#+TOC: headlines $n
+</pre>
+</div>
+</div>
+<p>Where <code class="verbatim">$n</code> is the max headline lvl that will be included. You can use <code class="verbatim">headlines 0</code> to include all headlines.</p>
+<nav>
+<ul>
+<li><a href="#headline-1">captions, custom attributes and more</a>
+</li>
+<li><a href="#headline-2">table of contents</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
