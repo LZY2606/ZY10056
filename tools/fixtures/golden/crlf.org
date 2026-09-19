@@ -1,0 +1,5 @@
+* CRLF headline
+Paragraph with CRLF line endings.
+- item one
+- item two
+  - nested item

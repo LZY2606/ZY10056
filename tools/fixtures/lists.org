@@ -1,0 +1,13 @@
+* Lists
+- a
+  - a.1
+  - a.2
+    1. numbered one
+    2. numbered two
+- b
+- term :: descriptive details
+  continued details
+
+1. first
+2. second
+   - nested unordered

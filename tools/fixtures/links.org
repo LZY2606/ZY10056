@@ -1,0 +1,6 @@
+* Links
+- [[https://example.com][external link]]
+- [[foo.org][relative org file]]
+- [[file:./images/pic.png]]
+- [[*Links][internal anchor]]
+- [[https://example.com/plain][https://example.com/plain]]

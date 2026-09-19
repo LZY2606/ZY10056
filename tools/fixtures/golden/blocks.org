@@ -1,0 +1,18 @@
+* Code blocks
+#+BEGIN_SRC go
+package main
+
+func main() {}
+#+END_SRC
+
+#+BEGIN_SRC sh
+echo hello
+#+END_SRC
+
+#+BEGIN_SRC python
+print("hi")
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+plain example block
+#+END_EXAMPLE

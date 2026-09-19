@@ -4,12 +4,13 @@
 // Further export formats can be defined using the Writer interface.
 //
 // You probably want to start with something like this:
-//   input := strings.NewReader("Your Org mode input")
-//   html, err := org.New().Parse(input, "./").Write(org.NewHTMLWriter())
-//   if err != nil {
-//       log.Fatalf("Something went wrong: %s", err)
-//   }
-//   log.Print(html)
+//
+//	input := strings.NewReader("Your Org mode input")
+//	html, err := org.New().Parse(input, "./").Write(org.NewHTMLWriter())
+//	if err != nil {
+//	    log.Fatalf("Something went wrong: %s", err)
+//	}
+//	log.Print(html)
 package org
 
 import (

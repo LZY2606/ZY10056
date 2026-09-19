@@ -1,0 +1,8 @@
+* Footnotes
+A paragraph with a named reference[fn:1] and another one[fn:note]
+plus an inline definition[fn:inline:the inline body].
+
+- references again to [fn:1] should not duplicate the definition
+
+[fn:1] The first definition with *markup*.
+[fn:note] The second definition.

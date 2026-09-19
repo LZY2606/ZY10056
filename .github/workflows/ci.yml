@@ -16,8 +16,10 @@ jobs:
         git log -1 --format="%H"
     - name: go
       run: sudo snap install go --classic
-    - name: test
-      run: make test
+    - name: modules
+      run: go mod download
+    - name: verify
+      run: sh tools/verify.sh full
     - name: gh-pages
       run: |
         git checkout --orphan gh-pages && git reset

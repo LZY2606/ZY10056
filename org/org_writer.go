@@ -64,6 +64,9 @@ func (w *OrgWriter) WriteHeadline(h Headline) {
 	if h.Priority != "" {
 		w.WriteString(" [#" + h.Priority + "]")
 	}
+	if h.IsComment {
+		w.WriteString(" COMMENT")
+	}
 	w.WriteString(" ")
 	WriteNodes(w, h.Title...)
 	if len(h.Tags) != 0 {
