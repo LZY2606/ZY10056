@@ -1,0 +1,128 @@
+# Verifying go-org
+
+`tools/verify.sh` is the single offline verification entry point used both
+locally and in CI (`.github/workflows/ci.yml` runs `sh tools/verify.sh`).
+It needs nothing but a Go toolchain and a POSIX shell — no network access,
+no pandoc, no browser, no downloaded tools, no running services.
+
+```sh
+sh tools/verify.sh          # full mode (default)
+sh tools/verify.sh full
+sh tools/verify.sh quick
+```
+
+Run it from anywhere; the script locates the repository root itself.
+
+## Modes
+
+Both modes run the same stages in the same fixed order — no stage is ever
+silently skipped. They differ only in scope and budget:
+
+| stage                | quick                        | full                  |
+|----------------------|------------------------------|-----------------------|
+| `test`               | `go test ./org/...`          | `go test ./...`       |
+| `fuzz-smoke` budget  | 60 mutated inputs            | 400 mutated inputs    |
+
+`quick` still covers the parser, both writers, the byte-level fixture
+manifest, one blorg build scenario and the fixed-corpus fuzz smoke; it is
+meant for fast local iteration (well under 90 seconds). `full` is what CI
+runs.
+
+## Stages (fixed order)
+
+1. `go-version` — the Go toolchain must satisfy the `go` directive in `go.mod`.
+2. `fixture-manifest` — verifies `tools/fixtures.manifest` (SHA-256 over the
+   **raw bytes** of the representative fixtures: CRLF, Unicode, footnotes,
+   code blocks, links, nested lists, plus their goldens) before any parsing
+   happens, so a tool that normalizes line endings or encoding cannot fake a
+   green run.
+3. `format` — `gofmt -l` must report nothing (read-only).
+4. `vet` — `go vet ./...`.
+5. `test` — package test suite.
+6. `html-writer-golden` — read-only comparison of rendered HTML against the
+   committed `org/testdata/*.html` goldens.
+7. `org-writer-golden` — read-only comparison against `*.pretty_org` goldens.
+8. `parser-structure` — for every representative document: parse → Org write
+   → re-parse, then compare headline levels, link targets, footnote
+   references, code block languages and list structure, plus the normalized
+   HTML output of both parse trees (`TestParseWriteParseStructure`).
+9. `blorg-build` — copies `blorg/testdata` into a temporary site, runs
+   `blorg build` there (never writes into the repository), and compares the
+   output file set and content against the committed `blorg/testdata/public`
+   tree, including relative and base-url links.
+10. `fuzz-smoke` — deterministic fuzz smoke (`TestFuzzSmoke`): fixed seed,
+    fixed corpus from `org/testdata`, bounded budget; asserts parser and both
+    writers never panic or error.
+11. `workspace-clean` — re-verifies the fixture manifest and asserts
+    `git status --porcelain` is identical to before the run.
+
+Every stage prints a start line and a success or failure summary. Golden
+drift is reported as a minimal unified diff (context 3) and is **never**
+auto-accepted: the script only reads golden files, it never rewrites them.
+
+## Offline boundary
+
+The script exports `GOPROXY=off` and `GOFLAGS=-mod=readonly`, so any missing
+module fails loudly instead of triggering a download. It also pins
+`LC_ALL=C` and `TZ=UTC`, so repeated runs — including under a different
+locale, timezone or `TMPDIR` — leave the workspace and the fixture hashes
+unchanged.
+
+## Exit codes
+
+- `0` — all stages passed.
+- `N` — the exit code of the first failing stage, preserved verbatim
+  (e.g. `1` for a failing test or golden diff).
+- `2` — usage error (unknown mode).
+- `130` / `143` — interrupted by SIGINT / SIGTERM.
+
+## Temp dirs and artifact lifecycle
+
+Each run creates exactly one temp dir (`$TMPDIR/go-org-verify.XXXXXX`) and
+only ever removes that directory — on success, on failure and on signals.
+On **failure** the directory is kept and its path is printed so the failing
+stage log and fuzz artifacts survive; delete it manually once inspected.
+
+Fuzz failures write the offending input to
+`<temp dir>/fuzz-artifacts/fuzz-crash-*.org` and the test output prints a
+replay command:
+
+```sh
+GO_ORG_FUZZ_REPLAY=<artifact> go test ./org -run TestFuzzSmoke -count=1 -v
+```
+
+## Reproducing failures
+
+Each stage logs to `<temp dir>/stage-<name>.log`; on failure the first diff
+location and the log head are printed. To re-run a single stage manually:
+
+```sh
+go test ./org -run TestHTMLWriter -count=1            # html-writer-golden
+go test ./org -run TestOrgWriter -count=1             # org-writer-golden
+go test ./org -run TestParseWriteParseStructure -count=1 -v  # parser-structure
+GO_ORG_FUZZ_BUDGET=400 go test ./org -run TestFuzzSmoke -count=1 -v  # fuzz-smoke
+```
+
+The fuzz seed is fixed (`GO_ORG_FUZZ_SEED`, default `20240517`); the same
+seed and budget always reproduce the same mutated inputs.
+
+## Updating the fixture manifest (manual process)
+
+The manifest is deliberately **not** regenerated by the verify script —
+accepting new fixture bytes is a human decision:
+
+1. Make and review the fixture change (e.g. edit `org/testdata/lists.org` or
+   regenerate goldens with `make generate-fixtures files=org/testdata/lists.org`).
+2. Run `sh tools/verify.sh` and confirm the only failure is the intended
+   `fixture-manifest` mismatch.
+3. Regenerate the manifest from the repository root:
+
+   ```sh
+   for n in crlf east_asian_line_breaks footnotes blocks inline lists; do
+     for e in org html pretty_org; do echo "org/testdata/$n.$e"; done
+   done | xargs shasum -a 256 > tools/fixtures.manifest
+   ```
+
+   (use `sha256sum` instead of `shasum -a 256` where applicable)
+4. Review the manifest diff, commit it together with the fixture change, and
+   re-run `sh tools/verify.sh` to confirm green.

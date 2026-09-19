@@ -222,8 +222,8 @@ jobs:
         git log -1 --format=&#34;%H&#34;
     - name: go
       run: sudo snap install go --classic
-    - name: test
-      run: make test
+    - name: verify
+      run: sh tools/verify.sh
     - name: gh-pages
       run: |
         git checkout --orphan gh-pages &amp;&amp; git reset
